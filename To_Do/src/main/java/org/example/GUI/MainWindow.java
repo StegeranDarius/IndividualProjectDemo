@@ -10,7 +10,6 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.Serial;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -20,13 +19,15 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
-import javax.swing.event.ListDataEvent;
-import javax.swing.event.ListDataListener;
 
-import org.example.core.TodoList;
+import org.example.core.TaskDAO;
+import org.example.core.TaskService;
 
 public class MainWindow extends JFrame{
 
+    private final TaskDAO taskDAO;
+    private final String username;
+    private final TodoListModel todoListModel;
     private JPanel mainContentPane;
     private JPanel newTaskControls;
     private JButton addTaskButton;
@@ -39,23 +40,25 @@ public class MainWindow extends JFrame{
     private JList<String> taskList;
     private JLabel statusBar;
 
-    private TodoList todoList;
-    private TodoListModel todoListModel;
+    private TaskService TaskService;
 
-    public MainWindow(){
-
-        this.todoList = new TodoList();
-        this.todoListModel = new TodoListModel(this.todoList);
-
-        this.setContentPane( this.getMainContentPane() );
-
+    public MainWindow(TaskDAO taskDAO, String username) {
+        this.taskDAO = taskDAO;
+        this.username = username;
+        this.todoListModel = new TodoListModel(taskDAO, username);
+        this.setContentPane(this.getMainContentPane());
         this.setTitle("Todo list");
-
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
         this.setMinimumSize(new Dimension(250, 250));
-
         this.pack();
+    }
+
+    private JList<String> getTaskList() {
+        if (this.taskList == null) {
+            this.taskList = new JList<>();
+            this.taskList.setModel(this.todoListModel);
+        }
+        return this.taskList;
     }
 
     private Container getMainContentPane() {
@@ -66,7 +69,6 @@ public class MainWindow extends JFrame{
             this.mainContentPane.add(getNewTaskControls(), BorderLayout.NORTH);
             this.mainContentPane.add(getTasksListScrollPane(), BorderLayout.CENTER);
             this.mainContentPane.add(getTasksListControls(), BorderLayout.EAST);
-            this.mainContentPane.add(getStatusBar(), BorderLayout.SOUTH);
 
         }
         return this.mainContentPane;
@@ -101,15 +103,6 @@ public class MainWindow extends JFrame{
         }
 
         return this.taskListScrollPane;
-    }
-
-    private JList<String> getTaskList() {
-        if (this.taskList == null) {
-            this.taskList = new JList<>();
-            this.taskList.setModel(this.todoListModel);
-        }
-
-        return this.taskList;
     }
 
     private Component getTasksListControls() {
@@ -213,27 +206,6 @@ public class MainWindow extends JFrame{
         return this.addTaskButton;
     }
 
-    private JLabel getStatusBar() {
-        if (this.statusBar == null) {
-            this.statusBar = new JLabel("Number of tasks: 0");
-            this.todoListModel.addListDataListener(new ListDataListener() {
-                @Override
-                public void contentsChanged(ListDataEvent e) {
-                    updateLabel(e);
-                }
 
-                private void updateLabel(ListDataEvent e) {
-                    getStatusBar().setText("Number of tasks: "+((TodoListModel)e.getSource()).getSize());
-                }
-
-                @Override
-                public void intervalRemoved(ListDataEvent e) {}
-                @Override
-                public void intervalAdded(ListDataEvent e) {}
-            });
-        }
-
-        return this.statusBar;
-    }
 
 }
